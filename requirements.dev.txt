@@ -1,0 +1,17 @@
+# Include regular requirements
+-r requirements.txt
+
+# Testing requirements
+pytest >= 6.2.0
+pytest-cov >= 2.10.0
+
+# Deployment requirements
+twine >= 3.2.0
+setuptools >= 44.0.0 
+
+# Development tools
+pycodestyle
+flake8
+pylint
+mypy
+black
