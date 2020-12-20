@@ -104,6 +104,16 @@ class SidekiqQueue(JobQueue):
         self.__sidekiq = kiq
 
     def enqueue(self, job: Job, delay: timedelta, *args) -> PrimitiveMap:
+        """Enqueues the specified job with the given delay and the
+           specified arguments to a sidekiq redis queue.
+
+        Args:
+            job (pykiq.job.Job): The job instance to enqueue.
+            delay (timedelta): The delay.
+
+        Returns:
+            PrimitiveMap: The mangled job
+        """
         now: datetime = datetime.now()
         schedule_at: datetime = now + delay
         data = dict()
