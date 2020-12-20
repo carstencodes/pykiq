@@ -1,3 +1,6 @@
+# Include pre-installation requirements
+-r requirements.pre.txt
+
 # Include regular requirements
 -r requirements.txt
 
@@ -7,7 +10,6 @@ pytest-cov >= 2.10.0
 
 # Deployment requirements
 twine >= 3.2.0
-setuptools >= 44.0.0 
 
 # Development tools
 pycodestyle
@@ -15,3 +17,4 @@ flake8
 pylint
 mypy
 black
+sphinx
