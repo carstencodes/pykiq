@@ -19,3 +19,4 @@ mypy
 black
 sphinx
 sphinx-rtd-theme
+bump2version
