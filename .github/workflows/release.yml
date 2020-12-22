@@ -46,20 +46,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
+      - name: Get tag name
+        uses: battila7/get-version-action@v2
+        id: tag_name
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
           changelog: ${{ needs.changelog.outputs.changelog }}
-          branch: ${{ steps.extract_branch.outputs.branch }}
+          branch: ${{ steps.tag_name.outputs.version }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: $changelog
+          tag_name: ${{ steps.tag_name.outputs.version }}
+          release_name: Release ${{ steps.tag_name.outputs.version }}
+          body: ${{ needs.changelog.outputs.changelog }}
           draft: false
-          prerelease: ${{ '$branch' != 'main' }}
+          prerelease: ${{ (startsWith(steps.tag_name.outputs.version, 'v0')) || (endsWith(steps.tag_name.outputs.version, '-pre')) || (endsWith(steps.tag_name.outputs.version, '-dev')) }}
