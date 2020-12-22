@@ -80,3 +80,7 @@ That's it.
 ## License
 
 This is merely a re-write of sidekiq's ruby code in python. Hence the same license for sidekiq and pykiq are used and the library can be freely distributed according to the LGPLv3.
+
+## Versioning
+
+This library follows semantic versioning 2.0. Any breaking change will produce a new major release. Versions below 1.0 are considered to have a unstable interface.
