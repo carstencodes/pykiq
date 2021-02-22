@@ -21,10 +21,10 @@
     the remote jobs.
 """
 from datetime import timedelta, datetime
-from typing import Tuple
+from typing import Tuple, Optional
 from secrets import token_hex
 
-from .connector import Connector
+from .connector import Connector, QueueNamespace
 from .job import Job, JobQueue, PrimitiveMap
 from .protocol import (
     SIDEKIQ_JOB_ID,
@@ -43,13 +43,17 @@ class Sidekiq:
     queues using a redis connection.
     """
 
-    def __init__(self, connector: Connector) -> None:
+    def __init__(
+        self, connector: Connector, queue_namespace: Optional[QueueNamespace]
+    ) -> None:
         """Creates a new instance.
 
         Args:
             connector (Connector): The remote connection to use.
+            queue_namespace (Optional[QueueNamespace]): The queue namespace to use
         """
         self.__connector: Connector = connector
+        self.__queue_namespace = queue_namespace
 
     def push_to_queue(
         self, queue_name: str, mapped_args: PrimitiveMap
@@ -71,7 +75,7 @@ class Sidekiq:
         result[SIDEKIQ_JOB_ID] = jid
 
         timestamp: datetime = self.__connector.push_to_queue(
-            queue_name, result, SIDEKIQ_ENQUEUED
+            queue_name, result, SIDEKIQ_ENQUEUED, self.__queue_namespace
         )
         result[SIDEKIQ_ENQUEUED] = timestamp.timestamp()
 

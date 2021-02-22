@@ -22,9 +22,11 @@ import unittest
 
 import pykiq
 
+
 class BasicTest(unittest.TestCase):
     def test_basic_implementation(self) -> None:
         pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
