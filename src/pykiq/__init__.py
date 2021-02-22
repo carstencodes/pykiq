@@ -19,7 +19,7 @@
 #
 """A simple python module for the object oriented access to sidekiq jobs.
 """
-from .connector import Connector
+from .connector import Connector, QueueNamespace
 from .job import Job, JobId
 from .sidekiq import Sidekiq, SidekiqQueue
 
@@ -29,4 +29,5 @@ __all__ = [
     "JobId",
     "Sidekiq",
     "SidekiqQueue",
+    "QueueNamespace",
 ]

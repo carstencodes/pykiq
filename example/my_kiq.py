@@ -22,10 +22,18 @@
 import sys
 import os
 from datetime import timedelta, datetime
+from typing import Optional
 
 sys.path.append(os.path.join(sys.path[0], "..", "src"))
 
-from pykiq import Sidekiq, SidekiqQueue, Job, JobId, Connector  # noqa: E402
+from pykiq import (
+    Sidekiq,
+    SidekiqQueue,
+    Job,
+    JobId,
+    Connector,
+    QueueNamespace,
+)  # noqa: E402
 
 
 class ConsoleConnector(Connector):
@@ -38,7 +46,11 @@ class ConsoleConnector(Connector):
         return super().disconnect()
 
     def push_to_queue(
-        self, queue_name: str, values: dict, tstamp_key_name: str
+        self,
+        queue_name: str,
+        values: dict,
+        tstamp_key_name: str,
+        ns: Optional[QueueNamespace],
     ) -> datetime:
         return datetime.now()
 
