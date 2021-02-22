@@ -4,7 +4,7 @@ A [sidekiq](https://sidekiq.org) client library for python 3. It uses a simple r
 
 ## Usage
 
-The same redis connection, i.e. server, port and database, must be used as it is already done for sidekiq. You can store it in a pikiq connector object:
+The same redis connection, i.e. server, port and database, must be used as it is already done for sidekiq. You can store it in a pykiq connector object:
 
 ```python
 
@@ -40,7 +40,7 @@ Queues can be declared directly in the constructor. You must re-use the names of
 class MyJobs(pykiq.Sidekiq):
     def __init__(self, connector: Connector) -> None:
         super().__init__(connector)
-        urgent_queue = pikiq.SidekiqQueue("urgent", self)
+        urgent_queue = pykiq.SidekiqQueue("urgent", self)
 ```
 
 A job can now easily be added:
@@ -49,7 +49,7 @@ A job can now easily be added:
 class MyJobs(pykiq.Sidekiq):
     def __init__(self, connector: Connector) -> None:
         super().__init__(connector)
-        urgent_queue = pikiq.SidekiqQueue("urgent", self)
+        urgent_queue = pykiq.SidekiqQueue("urgent", self)
         self.__clean_up = CleanUpJob(urgent_queue)
 
     @property
@@ -57,7 +57,7 @@ class MyJobs(pykiq.Sidekiq):
         return self.__clean_up
 
 class CleanUpJob(pykiq.Job):
-    def __init__(self, queue: pikiq.SidekiqQueue) -> None:
+    def __init__(self, queue: pykiq.SidekiqQueue) -> None:
         super().__init__(queue, "full::name::of::CleanUpJob")
 
     def clean_up_at(self, time_span: datetime.timedelta, amount: int):
