@@ -21,7 +21,7 @@
     testing purposes, the connection is held abstract.
 """
 from abc import abstractmethod
-from typing import Optional, Type, Union
+from typing import Optional, Type, Union, Protocol, Any
 from types import TracebackType
 from datetime import datetime
 from json import dumps as to_json_str
@@ -31,6 +31,32 @@ from redis import Redis
 from .base import NamedObject
 from .protocol import SIDEKIQ_QUEUES_NAME, SIDEKIQ_QUEUE_TPL
 from .error import ErrorHandler, NullErrorHandler
+
+
+class RedisProtocol(Protocol):
+    """Protocol class for Redis Interaction.
+    """
+    def sadd(self, set_name: str, item: Any) -> Any:
+        """Add item to a set.
+
+        Args:
+            set_name (str): The name of the set.
+            item (str): The item to add.
+
+        Returns:
+            Any: The Redis command result.
+        """
+
+    def lpush(self, list_name: str, encoded_data: str)-> Any:
+        """Push an item to a named list.
+
+        Args:
+            list_name (str): The name of the list.
+            encoded_data (str): The encoded data.
+
+        Returns:
+            Any: The Redis command result.
+        """
 
 
 class Connector:
@@ -166,12 +192,12 @@ class RedisConnector(Connector):
         self.__host: str = host
         self.__port: int = port
         self.__db: int = db
-        self.__redis_connection: Optional[Redis] = None
+        self.__redis_connection: Optional[RedisProtocol] = None
         super().__init__(error_handler)
 
     @staticmethod
     def from_existing_connection(
-        error_handler: ErrorHandler, redis_connection: Redis
+        error_handler: ErrorHandler, redis_connection: RedisProtocol
     ) -> "RedisConnector":
         """Creates a new redis connector using an existing redis connection.
 
@@ -222,7 +248,7 @@ class RedisConnector(Connector):
         if not self._connection_state or self.__redis_connection is None:
             raise ConnectionError("Not connected")
 
-        redis: Redis = self.__redis_connection
+        redis: RedisProtocol = self.__redis_connection
 
         now: datetime = datetime.now()
 
