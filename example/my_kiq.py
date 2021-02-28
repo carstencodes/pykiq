@@ -32,7 +32,7 @@ from pykiq import (
     Job,
     JobId,
     Connector,
-    QueueNamespace,
+    NamedObject,
 )  # noqa: E402
 
 
@@ -50,7 +50,7 @@ class ConsoleConnector(Connector):
         queue_name: str,
         values: dict,
         tstamp_key_name: str,
-        ns: Optional[QueueNamespace],
+        ns: Optional[NamedObject],
     ) -> datetime:
         return datetime.now()
 
@@ -68,7 +68,7 @@ class SayHelloJob(Job):
 
 class MyJobQueue(Sidekiq):
     def __init__(self, connector: Connector) -> None:
-        super().__init__(connector)
+        super().__init__(connector, None)
         important: SidekiqQueue = SidekiqQueue("important", self)
         regular: SidekiqQueue = SidekiqQueue("regular", self)
 
@@ -84,7 +84,7 @@ class MyJobQueue(Sidekiq):
 
 
 if __name__ == "__main__":
-    queue: MyJobQueue = MyJobQueue(ConsoleConnector(None))
+    mqueue: MyJobQueue = MyJobQueue(ConsoleConnector(None))
     in_one_minute: timedelta = timedelta(minutes=1.0)
-    id = queue.say.perform_in(in_one_minute, "Hello")
+    id = mqueue.say.perform_in(in_one_minute, "Hello")
     print(id)

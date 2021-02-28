@@ -20,31 +20,17 @@
 """ Definition of a backend connection to communicate with sidekiq. For
     testing purposes, the connection is held abstract.
 """
-from abc import abstractmethod, ABC
-from typing import Optional, Type
+from abc import abstractmethod
+from typing import Optional, Type, Union
 from types import TracebackType
 from datetime import datetime
 from json import dumps as to_json_str
 
 from redis import Redis
 
+from .base import NamedObject
 from .protocol import SIDEKIQ_QUEUES_NAME, SIDEKIQ_QUEUE_TPL
 from .error import ErrorHandler, NullErrorHandler
-
-
-class QueueNamespace(ABC):
-    """Represents the namespace provider for a queue in case you want to queues with namespaces.
-    """
-    @abstractmethod
-    def get_name(self, queue_name: str) -> str:
-        """Creates a name for the queue using a namespace.
-
-        Args:
-            queue_name (str): The name of the queue.
-
-        Returns:
-            str: The name of the queue with a namespace.
-        """
 
 
 class Connector:
@@ -72,10 +58,9 @@ class Connector:
     @abstractmethod
     def push_to_queue(
         self,
-        queue_name: str,
+        queue_name: Union[str, NamedObject],
         values: dict,
         tstamp_key_name: str,
-        namespace_manager: Optional[QueueNamespace],
     ) -> datetime:
         """Pushes an instance represented by the specified values
             to a queue represented by its name. The timestamp is
@@ -86,7 +71,7 @@ class Connector:
             values (dict): The values to pack.
             tstamp_key_name (str): The name of the key to use for the
                     timestamp.
-            namespace_manager (Optional[QueueNamespace]): The namespace to use.
+            namespace_manager (Optional[NamedObject]): The namespace to use.
 
         Returns:
             datetime: The timestamp used for enqueuing.
@@ -230,10 +215,9 @@ class RedisConnector(Connector):
 
     def push_to_queue(
         self,
-        queue_name: str,
+        queue_name: Union[str, NamedObject],
         values: dict,
         tstamp_key_name: str,
-        namespace_manager: Optional[QueueNamespace],
     ) -> datetime:
         if not self._connection_state or self.__redis_connection is None:
             raise ConnectionError("Not connected")
@@ -246,10 +230,15 @@ class RedisConnector(Connector):
         data[tstamp_key_name] = now.timestamp()
 
         encoded_data = to_json_str(data)
-        redis.sadd(SIDEKIQ_QUEUES_NAME, queue_name)
-        queue = SIDEKIQ_QUEUE_TPL.format(queue_name)
-        if namespace_manager is not None:
-            queue = namespace_manager.get_name(queue)
+
+        if isinstance(queue_name, NamedObject):
+            target_address: str = queue_name.get_name()
+            queue: str = queue_name.get_full_name()
+        else:
+            target_address: str = str(queue_name)
+            queue: str = SIDEKIQ_QUEUE_TPL.format(target_address)
+
+        redis.sadd(SIDEKIQ_QUEUES_NAME, target_address)
         redis.lpush(queue, encoded_data)
 
         return now
