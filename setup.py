@@ -21,7 +21,7 @@
 
 from setuptools import setup, find_packages
 
-__VERSION__ = "0.10.0"
+__VERSION__ = "0.10.3"
 
 long_description: str = ""
 with open("README.md", "r") as read_me_file:
