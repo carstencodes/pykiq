@@ -21,10 +21,11 @@
     the remote jobs.
 """
 from datetime import timedelta, datetime
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 from secrets import token_hex
 
-from .connector import Connector, QueueNamespace
+from .base import NamedObject, Namespace
+from .connector import Connector
 from .job import Job, JobQueue, PrimitiveMap
 from .protocol import (
     SIDEKIQ_JOB_ID,
@@ -34,6 +35,7 @@ from .protocol import (
     SIDEKIQ_ARGS,
     SIDEKIQ_CREATED,
     SIDEKIQ_QUEUE,
+    SIDEKIQ_QUEUE_TPL,
 )
 
 
@@ -44,7 +46,7 @@ class Sidekiq:
     """
 
     def __init__(
-        self, connector: Connector, queue_namespace: Optional[QueueNamespace]
+        self, connector: Connector, queue_namespace: Optional[NamedObject]
     ) -> None:
         """Creates a new instance.
 
@@ -56,7 +58,7 @@ class Sidekiq:
         self.__queue_namespace = queue_namespace
 
     def push_to_queue(
-        self, queue_name: str, mapped_args: PrimitiveMap
+        self, queue_name: Union[str, NamedObject], mapped_args: PrimitiveMap
     ) -> Tuple[str, PrimitiveMap]:
         """Pushes the mapped execution arguments to the queue using the
            current connection.
@@ -93,10 +95,27 @@ class Sidekiq:
         return token_hex(number_of_bytes_in_jid)
 
 
-class SidekiqQueue(JobQueue):
+class _EmptySidekiqNamespace(Namespace):
+    """Implementation of a namespace for the sidekiq redis queues.
+    """
+    def get_full_name(self, instance: NamedObject) -> str:
+        """Creates a default full name for the queue.
+
+        Args:
+            instance (NamedObject): The named object to wrap up.
+
+        Returns:
+            str: The sidekiq target queue name.
+        """
+        return SIDEKIQ_QUEUE_TPL.format(instance.get_name())
+
+
+class SidekiqQueue(JobQueue, NamedObject):
     """A simple job queue using a sidekiq backend."""
 
-    def __init__(self, name: str, kiq: Sidekiq) -> None:
+    def __init__(
+        self, name: str, kiq: Sidekiq, namespace: Optional[Namespace] = None
+    ) -> None:
         """Initializes a new instance.
 
         Args:
@@ -106,6 +125,7 @@ class SidekiqQueue(JobQueue):
         super().__init__()
         self.__queue_name = name
         self.__sidekiq = kiq
+        self.__namespace = namespace or _EmptySidekiqNamespace()
 
     def enqueue(self, job: Job, delay: timedelta, *args) -> PrimitiveMap:
         """Enqueues the specified job with the given delay and the
@@ -127,7 +147,13 @@ class SidekiqQueue(JobQueue):
         data[SIDEKIQ_CREATED] = now.timestamp()
         data[SIDEKIQ_QUEUE] = self.__queue_name
 
-        (jid, result) = self.__sidekiq.push_to_queue(self.__queue_name, data)
+        (jid, result) = self.__sidekiq.push_to_queue(self, data)
         result[SIDEKIQ_JOB_ID] = jid
 
         return result
+
+    def get_name(self) -> str:
+        return self.__queue_name
+
+    def get_full_name(self) -> str:
+        return self.__namespace.get_full_name(self)
